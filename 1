@@ -1,0 +1,303 @@
+getgenv().config = {
+    autoEgg = true,
+    targetEgg = "Arcade Egg 5",
+    ForceHop = 260, -- [SECONDS]
+
+    -- Mailbox
+    autoMailbox = true,
+    receiverUsername = "DylanXAlli2009Farm1",
+    message = "50 works nicee",
+    everyNumEggs = 50,
+
+    -- Webhook
+    NotifWebhookURL = "https://discord.com/api/webhooks/1228792438550827058/vEFoNDkMblX284s0CPC2-neIBGJ3eZ1zQLcqCdmicYwK5mrYl1IafQWS3uO5lzhnsGvV",
+    AlertWebhookURL = "https://discord.com/api/webhooks/1228792438550827058/vEFoNDkMblX284s0CPC2-neIBGJ3eZ1zQLcqCdmicYwK5mrYl1IafQWS3uO5lzhnsGvV",
+    DiscordID = "514517240574509082"
+}
+
+repeat task.wait() until game:IsLoaded()
+repeat task.wait() until game.PlaceId ~= nil
+repeat task.wait() until game:GetService("Players").LocalPlayer
+local Player = game.Players.LocalPlayer
+repeat task.wait() until not game.Players.LocalPlayer.PlayerGui:FindFirstChild("__INTRO")
+local HRP = Player.Character.HumanoidRootPart
+local RepStor = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Library = require(RepStor.Library)
+local saveMod = require(RepStor.Library.Client.Save)
+repeat task.wait() until Library.Loaded
+local Active = workspace.__THINGS.__INSTANCE_CONTAINER.Active
+local xRange = {min = 183, max = 212, def = 164}
+local zRange = {min = -1947, max = -1918, def = -1967}
+
+local MachineCmds = require(game.ReplicatedStorage.Library.Client.InstancingCmds)
+function Enter(Name)
+    setthreadidentity(2)
+    pcall(function() 
+        MachineCmds.Enter(Name)
+    end)
+    setthreadidentity(7)
+end
+
+function RequestWebhook(WebUrl, Body) 
+    pcall(function()
+        local response = request({
+            Url = WebUrl,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = Body
+        })
+    end)
+end
+
+function floorVector3(v3) return Vector3.new(math.floor(v3.X), math.floor(v3.Y), math.floor(v3.Z)) end
+function sendNotif(url, msg) request({Url = url,Method = "POST",Headers = {["Content-Type"] = "application/json"},Body = HttpService:JSONEncode({content = msg})}) end
+function getItemInfo(class, itemName, info)
+    if saveMod.Get()["Inventory"][class] then -- just add this check so it doesn't iterate over nil
+        for i,v in saveMod.Get()["Inventory"][class] do
+            if v.id == itemName then
+                if info == "uid" then
+                    return i
+                else
+                    return v[info]
+                end
+            end
+        end
+    end
+end
+
+function GetQuantity(ItemName, class)
+    for i, v in pairs(require(game.ReplicatedStorage:WaitForChild('Library')).Save.Get().Inventory[class]) do
+        if v.id == ItemName then
+            return v._am or 1
+        end
+    end
+    return 0
+end
+
+function GetAssetID(PetName, PetType)
+    if require(game.ReplicatedStorage.Library.Directory.MiscItems)[PetName] then
+        PetAssetID = require(game.ReplicatedStorage.Library.Directory.MiscItems)[PetName].Icon
+    end
+    return string.gsub(PetAssetID, "rbxassetid://", "")
+end
+
+spawn(function()
+    while task.wait() do
+        pcall(function()
+            game:GetService("ReplicatedStorage").Network["Mailbox: Claim All"]:InvokeServer()
+        end)
+        task.wait(60)
+    end
+end)
+
+sEggAmt = GetQuantity("Arcade Egg 5", "Lootbox")
+sTokenAmt = GetQuantity("Arcade Token", "Misc")
+
+print("Current Targeted Eggs :", sEggAmt)
+print("Current Arcade Tokens :", sTokenAmt)
+
+if sTokenAmt == 0 then
+    print("Ran Out of Tokens")
+    local message1 = {
+        content = "<@".. config.DiscordID ..">",
+        embeds = {
+            {
+                title = "<:alert:1243650238359797900>  No Arcade Tokens Left  <:alert:1243650238359797900>",
+                color = 0xFF0000,
+                timestamp = DateTime.now():ToIsoDate(),
+                thumbnail = {
+                    url = "https://biggamesapi.io/image/" .. GetAssetID("Arcade Token"),
+                },
+                fields = {
+                    { name = "Roblox Username: ``" .. game.Players.LocalPlayer.Name .. "``", value = ""},
+                    { name = "<:egg50x:1243652409826213929> Total Arcade Eggs: ``" .. tostring(GetQuantity("Arcade Egg 5", "Lootbox")) .. "``", value = ""},
+                },
+                footer = {
+                    text = "Dylan's Arcade Bot"
+                }
+            }
+        }
+    }
+    jsonMessage = game:GetService("HttpService"):JSONEncode(message1)
+    RequestWebhook(config.AlertWebhookURL, jsonMessage)
+    print("Alert Webhook Sent")
+end
+
+spawn(function()
+    while task.wait(5) do
+        if #game.Players:GetPlayers() >= 39 then
+            game.Players.LocalPlayer:Kick("You are in a pubic server!")
+        end
+    end
+end)
+
+local startTime = os.time() ; local placeIds = {[8737899170] = 16498369169, [16498369169] = 8737899170}
+local failedTeleport = false game:GetService("TeleportService").TeleportInitFailed:Connect(function() failedTeleport = true print("Set failTP to true") end)
+FailedTPCount = 0
+local function joinGame()
+    if os.time() - startTime <= 15 then
+        repeat task.wait(1) until os.time() - startTime >= 15
+    end
+
+    if game.PlaceId == 16498369169 then
+        print("Teleporting to World 1")
+        game:GetService("ReplicatedStorage").Network.World1Teleport:InvokeServer()
+    else
+        print("Teleporting to World 2")
+        game:GetService("ReplicatedStorage").Network.World2Teleport:InvokeServer()
+    end 
+
+    print("Waiting for Fail") ; local startWait = os.time()
+    repeat task.wait(2) until failedTeleport or os.time() - startWait >= 3
+    warn("Failed Teleport, Retrying") failedTeleport = false
+    FailedTPCount = FailedTPCount + 1
+    if FailedTPCount == 3 then
+        while true do
+            Instance.new("Part").Parent = game.Workspace
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(15) do
+        if Active:FindFirstChild("StairwayToHeaven") or (os.time() - startTime >= config.ForceHop) then
+            joinGame()
+        end
+    end
+end)
+
+while true do 
+    print("Going again...")
+    if Active:FindFirstChild("ClawMachine") then
+        print("In ClawMachine Area")
+		local clawHolder = Active.ClawMachine.Claws.Claw.Holder
+		local targetEgg = Active.ClawMachine.Items:FindFirstChild(config.targetEgg)
+        if targetEgg then
+			local eggPos = Vector2.new(math.floor(targetEgg:GetPivot().X), math.floor(targetEgg:GetPivot().Z))
+
+            if eggPos.X < xRange.min and eggPos.Y < zRange.min
+			or eggPos.Y < zRange.min and eggPos.X < xRange.min
+			or eggPos.X > xRange.max or eggPos.Y > zRange.max
+			or eggPos.X < xRange.def or eggPos.Y < zRange.def then
+				print(`unable to grab`) targetEgg:Destroy()
+			else
+				print(`{targetEgg.Name} | {eggPos} : is Good`)
+
+                repeat task.wait() until math.abs(clawHolder.Position.X - xRange.def) <= 3 and math.abs(clawHolder.Position.Z - zRange.def) <= 5 or not Active:FindFirstChild("ClawMachine")
+
+                if Player.PlayerGui._INSTANCES.ClawMachine.Enabled then
+                    print(`AutoClaw Enabled`)
+					if clawHolder.Position.X < eggPos.X then
+						print(`{floorVector3(clawHolder.Position)} | {eggPos} : Need to move Claw Forward`)
+						Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Direction", "Forward")
+						repeat task.wait(.01) until math.floor(clawHolder.Position.X) >= eggPos.X or not Player.PlayerGui._INSTANCES.ClawMachine.Enabled
+						Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Direction")
+					end
+
+					if clawHolder.Position.Z < eggPos.Y then
+						print(`{floorVector3(clawHolder.Position)} | {eggPos} : Need to move Claw to the Right`)
+						Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Direction", "Right")
+						repeat task.wait(.01) until math.floor(clawHolder.Position.Z) >= eggPos.Y or not Player.PlayerGui._INSTANCES.ClawMachine.Enabled
+						Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Direction")
+					end
+
+					task.wait(10) Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Go") print("Resetting attempt")
+
+                    local startAttempt = os.time()
+                    repeat 
+                        task.wait(3) 
+                        print("Waiting for Claw to reset") 
+                        Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Go")
+                        if (os.time() - startAttempt >= 9) then
+                            break
+                        end
+                    until math.abs(clawHolder.Position.X - xRange.def) <= 3 and math.abs(clawHolder.Position.Z - zRange.def) <= 5 or not Active:FindFirstChild("ClawMachine")
+
+                    if math.abs(targetEgg:GetPivot().X - xRange.def) <= 3 then
+                        repeat task.wait() until targetEgg.Parent == nil print(`Finished Getting {targetEgg.Name}`)
+                        task.wait(20)
+                    end
+                    if GetQuantity("Arcade Egg 5", "Lootbox") > sEggAmt then
+                        -- Your script here
+
+-- Add this to send a webhook when the loop ends
+local endTime = os.time()
+local elapsed = endTime - startTime
+local message1 = {
+    content = "",
+    embeds = {
+        {
+            title = game.Players.LocalPlayer.Name .. " : Loop Ended",
+            color = 0xFF6FFF,
+            timestamp = DateTime.now():ToIsoDate(),
+            thumbnail = {
+                url = "https://biggamesapi.io/image/16759779609",
+            },
+            fields = {
+                { name = "<:egg50x:1243652409826213929> Arcade Eggs Gained: ``" .. tostring(GetQuantity("Arcade Egg 5", "Lootbox")) .. "``", value = ""},
+                { name = "<:token:1243650634201305221> Arcade Tokens Used: ``" .. tostring(sTokenAmt - GetQuantity("Arcade Token", "Misc")) .. "``", value = ""},
+                { name = "<:token:1243650634201305221> Total Arcade Tokens: ``" .. tostring(GetQuantity("Arcade Token", "Misc")) .. "``", value = ""}, 
+                { name = "Time Elapsed: ``" .. elapsed .. " seconds``", value = ""}
+            },
+            footer = {
+                text = "Dylanpackz's Arcade Bot"
+            }
+        }
+    }
+}
+jsonMessage = game:GetService("HttpService"):JSONEncode(message1)
+RequestWebhook(config.NotifWebhookURL, jsonMessage)
+print("Webhook Sent") 
+                    end
+
+                    if config.autoMailbox and GetQuantity("Arcade Egg 5", "Lootbox") >= config.everyNumEggs then
+                        game:GetService("ReplicatedStorage").Network["Mailbox: Send"]:InvokeServer(config.receiverUsername, config.message, "Lootbox", getItemInfo("Lootbox", config.targetEgg, "uid"), GetQuantity("Arcade Egg 5", "Lootbox"))
+                    end
+				else
+                    Library.Network.Fire("Instancing_FireCustomFromClient", "ClawMachine", "Claw: Request Play") task.wait(3)
+				end
+			end
+		else
+            print(`No {config.targetEgg}(s) exist.`)
+
+            while Player do
+                joinGame() task.wait(5)
+            end
+		end
+	else
+        Enter("ClawMachine")
+        local startAttempt = os.time()
+        repeat task.wait(.1) until Active:FindFirstChild("ClawMachine") or (os.time() - startAttempt >= 5 and not Active:FindFirstChild("ClawMachine"))
+        if not Active:FindFirstChild("ClawMachine") then
+            repeat task.wait(1) print("Entering Minigame..") Enter("ClawMachine") until Active:FindFirstChild("ClawMachine")
+        end
+        if Active:FindFirstChild("ClawMachine") then
+            game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").Anchored = true
+            if workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine:FindFirstChild("MetalSign") then
+                repeat task.wait() 
+                    pcall(function() workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine.MetalSign:Destroy() end)
+                until not workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine:FindFirstChild("MetalSign")
+            end
+            if workspace.__THINGS.Instances.ClawMachine.Teleports:FindFirstChild("Leave") then
+                repeat task.wait() 
+                    pcall(function() workspace.__THINGS.Instances.ClawMachine.Teleports.Leave:Destroy() end)
+                until not workspace.__THINGS.Instances.ClawMachine.Teleports:FindFirstChild("Leave")
+            end
+            if workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine:FindFirstChild("ClawMachine") then
+                repeat task.wait() 
+                    pcall(function() workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine.ClawMachine:Destroy() end)
+                until not workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine:FindFirstChild("ClawMachine")
+            end
+            if workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine:FindFirstChild("Model") then
+                repeat task.wait() 
+                    pcall(function() workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine.Model:Destroy() end)
+                until not workspace.__THINGS.__INSTANCE_CONTAINER.Active.ClawMachine:FindFirstChild("Model")
+            end
+        end
+        print("Entered Area")
+	end
+end
