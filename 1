@@ -222,26 +222,25 @@ while true do
                         task.wait(20)
                     end
                     if GetQuantity("Arcade Egg 5", "Lootbox") > sEggAmt then
-                        -- Your script here
 
--- Add this to send a webhook when the loop ends
 local endTime = os.time()
 local elapsed = endTime - startTime
 local message1 = {
     content = "",
     embeds = {
         {
-            title = game.Players.LocalPlayer.Name .. " : Loop Ended",
+            title = game.Players.LocalPlayer.Name .. " : Gained " .. tostring(GetQuantity("Arcade Egg 5", "Lootbox") - sEggAmt) .. " <:egg50x:1243652409826213929>",
             color = 0xFF6FFF,
             timestamp = DateTime.now():ToIsoDate(),
             thumbnail = {
                 url = "https://biggamesapi.io/image/16759779609",
             },
             fields = {
-                { name = "<:egg50x:1243652409826213929> Arcade Eggs Gained: ``" .. tostring(GetQuantity("Arcade Egg 5", "Lootbox")) .. "``", value = ""},
-                { name = "<:token:1243650634201305221> Arcade Tokens Used: ``" .. tostring(sTokenAmt - GetQuantity("Arcade Token", "Misc")) .. "``", value = ""},
-                { name = "<:token:1243650634201305221> Total Arcade Tokens: ``" .. tostring(GetQuantity("Arcade Token", "Misc")) .. "``", value = ""}, 
-                { name = "Time Elapsed: ``" .. elapsed .. " seconds``", value = ""}
+                                        { name = "<:egg50x:1243652409826213929> Arcade Eggs Gained: ``" .. tostring(GetQuantity("Arcade Egg 5", "Lootbox") - sEggAmt) .. "``", value = ""}, 
+                                        { name = "<:egg50x:1243652409826213929> Total Arcade Eggs: ``" .. tostring(GetQuantity("Arcade Egg 5", "Lootbox")) .. "``", value = ""},
+                                        { name = "<:token:1243650634201305221> Arcade Tokens Used: ``" .. tostring(sTokenAmt - GetQuantity("Arcade Token", "Misc")) .. "``", value = ""}, 
+                                        { name = "<:token:1243650634201305221> Total Arcade Tokens: ``" .. tostring(GetQuantity("Arcade Token", "Misc")) .. "``", value = ""}, 
+                                        { name = "<:clock123:1256706725776461946> Time Taken: ``" .. elapsed .. " seconds``", value = ""}
             },
             footer = {
                 text = "Dylanpackz's Arcade Bot"
